@@ -80,7 +80,7 @@ public class ApiSource {
     private String outputPath;
 
     /** swagger文件生成格式，可选值{@link Output} */
-    private String outputFormats = Output.json.name();
+    private String outputFormat = Output.json.name();
 
     private String swaggerDirectory;
 

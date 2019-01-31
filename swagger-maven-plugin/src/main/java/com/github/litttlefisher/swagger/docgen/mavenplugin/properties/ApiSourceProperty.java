@@ -62,7 +62,7 @@ public class ApiSourceProperty {
 
     /** swagger文件生成格式，可选值{@link Output} */
     @Parameter(defaultValue = "json")
-    private String outputFormats = Output.json.name();
+    private String outputFormat = Output.json.name();
 
     @Parameter
     private String swaggerDirectory;

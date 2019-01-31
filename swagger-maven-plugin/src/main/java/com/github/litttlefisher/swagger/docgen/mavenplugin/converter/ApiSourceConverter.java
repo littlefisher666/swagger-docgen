@@ -25,7 +25,7 @@ public class ApiSourceConverter {
                 InfoConverter.convert(property.getInfo())).javadocEnabled(property.isJavadocEnabled())
             .jsonExampleValues(property.isJsonExampleValues()).locations(property.getLocations()).modelConverters(
                 property.getModelConverters()).modelSubstitute(property.getModelSubstitute()).operationIdFormat(
-                property.getOperationIdFormat()).outputFormats(property.getOutputFormats()).outputPath(
+                property.getOperationIdFormat()).outputFormat(property.getOutputFormat()).outputPath(
                 property.getOutputPath()).removeBasePathFromEndpoints(property.isRemoveBasePathFromEndpoints()).schemes(
                 property.getSchemes()).securityDefinitions(
                 CollectionUtils.isEmpty(property.getSecurityDefinitions()) ? null :

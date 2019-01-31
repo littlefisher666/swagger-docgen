@@ -33,6 +33,8 @@ import com.github.litttlefisher.swagger.docgen.enums.DocumentSourceType;
 import com.github.litttlefisher.swagger.docgen.exception.GenerateException;
 import com.github.litttlefisher.swagger.docgen.mavenplugin.converter.ApiSourceConverter;
 import com.github.litttlefisher.swagger.docgen.mavenplugin.properties.ApiSourceProperty;
+import com.github.litttlefisher.swagger.docgen.mavenplugin.properties.SwaggerToMarkupProperty;
+import com.github.litttlefisher.swagger.docgen.mavenplugin.swagger2markup.SwaggerToMarkupGenerator;
 
 import io.swagger.util.Json;
 
@@ -96,6 +98,18 @@ public class ApiDocumentMojo extends AbstractMojo {
     private boolean skipSwaggerGeneration;
 
     /**
+     * 使用是否swagger2Makeup插件生成adoc文件
+     */
+    @Parameter
+    private boolean swaggerToMarkupEnabled;
+
+    /**
+     * swagger2Makeup的配置参数
+     */
+    @Parameter
+    private SwaggerToMarkupProperty swaggerToMarkup;
+
+    /**
      * 生成文件时，文件的编码格式
      */
     @Parameter(property = "file.encoding")
@@ -110,6 +124,17 @@ public class ApiDocumentMojo extends AbstractMojo {
         if (project != null) {
             projectEncoding = project.getProperties().getProperty(MavenPropertyConstant.PROJECT_BUILD_SOURCE_ENCODING);
         }
+        generateSwagger();
+        generateADoc();
+    }
+
+    /**
+     * 生成swagger文件
+     *
+     * @throws MojoExecutionException 异常
+     * @throws MojoFailureException 异常
+     */
+    private void generateSwagger() throws MojoExecutionException, MojoFailureException {
 
         if (skipSwaggerGeneration) {
             getLog().info("Swagger生成被过滤掉了.");
@@ -152,10 +177,10 @@ public class ApiDocumentMojo extends AbstractMojo {
                     documentSource.toDocuments();
                 }
                 String swaggerFileName = apiSource.getSwaggerFileName();
-                documentSource.toSwaggerDocuments(apiSource.getOutputFormats(), swaggerFileName, projectEncoding);
+                documentSource.toSwaggerDocuments(apiSource.getOutputFormat(), swaggerFileName, projectEncoding);
 
                 if (apiSource.isAttachSwaggerArtifact() && apiSource.getSwaggerDirectory() != null && project != null) {
-                    String outputFormats = apiSource.getOutputFormats();
+                    String outputFormats = apiSource.getOutputFormat();
                     if (outputFormats != null) {
                         for (String format : outputFormats.split(SymbolConstant.COMMA)) {
                             String classifier = ApiSource.DEFAULT_SWAGGER_FILE_NAME.equals(swaggerFileName) ?
@@ -171,6 +196,39 @@ public class ApiDocumentMojo extends AbstractMojo {
             throw new MojoFailureException(e.getMessage(), e);
         } catch (Exception e) {
             throw new MojoExecutionException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 通过swagger2markup工具生成adoc文件
+     *
+     * @throws MojoExecutionException 异常
+     * @throws MojoFailureException 异常
+     */
+    private void generateADoc() throws MojoExecutionException, MojoFailureException {
+        if (swaggerToMarkupEnabled) {
+            try {
+                if (swaggerToMarkup == null) {
+                    throw new GenerateException("如果要使用swagger2markup 则`<swaggerToMarkup>`必须配置！");
+                }
+                for (ApiSourceProperty apiSource : apiSources) {
+                    String swaggerFile = apiSource.getSwaggerDirectory() + File.separator + apiSource
+                        .getSwaggerFileName() + SymbolConstant.PERIOD + apiSource.getOutputFormat();
+                    if (getLog().isDebugEnabled()) {
+                        getLog().debug("convertSwagger2markup goal started");
+                        getLog().debug("outputDir: " + swaggerToMarkup.getOutputDir());
+                        swaggerToMarkup.getConfig().forEach((key, value) -> getLog().debug(key + ": " + value));
+                    }
+
+                    new SwaggerToMarkupGenerator(getLog(), swaggerFile, swaggerToMarkup.getOutputDir(),
+                        swaggerToMarkup.getConfig()).generate();
+                }
+
+            } catch (GenerateException e) {
+                throw new MojoFailureException(e.getMessage(), e);
+            } catch (Exception e) {
+                throw new MojoExecutionException(e.getMessage(), e);
+            }
         }
     }
 
